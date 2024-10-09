@@ -1,0 +1,49 @@
+# Docker image for Zephyr development with Espressif targets (e.g. ESP32)
+
+# Base Image (zephyr-base)
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE:-zephyrprojectrtos/base:0.26.15}
+
+# Settings
+ARG ZEPHYR_VERSION=3.7.0
+ARG ZEPHYR_SDK_VERSION=0.16.8
+ARG ESP_IDF_VERSION=5.3.1
+ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll"
+
+# Set environment variables
+ENV ZEPHYR_VERSION=$ZEPHYR_VERSION
+ENV ZEPHYR_SDK_VERSION=$ZEPHYR_SDK_VERSION
+ENV ESP_IDF_VERSION=$ESP_IDF_VERSION
+ENV ZEPHYR_BASE=/opt/toolchains/zephyr
+ENV ESPRESSIF_TOOLCHAIN_PATH=/opt/toolchains/esp-idf
+
+# Install dependencies
+RUN apt-get update && \
+	apt-get install -y \
+		python3-venv
+
+# Set up directories
+RUN mkdir -p /workdir/ && \
+	mkdir -p /opt/toolchains
+
+# Install Zephyr
+RUN cd /opt/toolchains && \
+	git clone https://github.com/zephyrproject-rtos/zephyr.git -b v${ZEPHYR_VERSION} && \
+	cd zephyr && \
+	pip3 install -r scripts/requirements.txt
+	
+# Install Zephyr SDK
+RUN cd /opt/toolchains && \
+	wget ${WGET_ARGS} https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZEPHYR_SDK_VERSION}/zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${HOSTTYPE}.tar.xz && \
+	tar xf zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${HOSTTYPE}.tar.xz && \
+	zephyr-sdk-${ZEPHYR_SDK_VERSION}/setup.sh -t all -h -c && \
+	rm zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${HOSTTYPE}.tar.xz
+
+# Install ESP-IDF
+RUN cd /opt/toolchains && \
+	git clone --recursive https://github.com/espressif/esp-idf.git -b v${ESP_IDF_VERSION} && \
+	cd esp-idf && \
+	./install.sh all
+
+# Launch bash shell by default
+CMD ["/bin/bash"]
