@@ -1,6 +1,0 @@
-[manifest]
-path = /opt/toolchains/zephyr
-file = west.yml
-
-[zephyr]
-base = /opt/toolchains/zephyr
