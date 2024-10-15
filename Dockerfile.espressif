@@ -1,15 +1,23 @@
 # Docker image for Zephyr development with Espressif targets (e.g. ESP32)
 
-# Base Image (zephyr-base)
-ARG BASE_IMAGE
-FROM ${BASE_IMAGE:-zephyrprojectrtos/ci-base:v0.26.15}
-
 # Settings
-# ARG VARIANT=espressif
-ARG ZEPHYR_RTOS_VERSION=3.7.0
+ARG ZEPHYR_CI_IMAGE_VERSION=0.26.15
+# Zephyr 3.7.0 is not working with ESP32S3, see: https://github.com/zephyrproject-rtos/zephyr/issues/71397
+#ARG ZEPHYR_RTOS_VERSION=3.7.0
+ARG ZEPHYR_RTOS_COMMIT=7e9fb8b51fd9c40bf6673d6a82a612491a27548a
 ARG ZEPHYR_SDK_VERSION=0.16.8
-# ARG ESP_IDF_VERSION=5.3.1
 ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll"
+
+#-------------------------------------------------------------------------------
+# Base Image and Dependencies
+
+# User the Zephyr CI base image
+FROM zephyrprojectrtos/ci-base:v${ZEPHYR_CI_IMAGE_VERSION}
+
+# Redeclare arguments after FROM
+ARG ZEPHYR_RTOS_VERSION
+ARG ZEPHYR_SDK_VERSION
+ARG WGET_ARGS
 
 # Install dependencies
 RUN apt-get update && \
@@ -27,22 +35,21 @@ RUN mkdir -p /workspace/ && \
 # Zephyr Toolchain
 
 # Set Zephyr environment variables
-# ENV ZEPHYR_TOOLCHAIN_VARIANT=$VARIANT
-ENV ZEPHYR_RTOS_VERSION=$ZEPHYR_RTOS_VERSION
-# ENV ZEPHYR_BASE=/opt/toolchains/zephyr
-ENV ZEPHYR_SDK_VERSION=$ZEPHYR_SDK_VERSION
-# ENV ZEPHYR_SDK_INSTALL_DIR=/opt/toolchains/zephyr-sdk-${ZEPHYR_SDK_VERSION}
+ENV ZEPHYR_RTOS_VERSION=${ZEPHYR_RTOS_VERSION}
+ENV ZEPHYR_SDK_VERSION=${ZEPHYR_SDK_VERSION}
 
 # Install Zephyr
 RUN cd /opt/toolchains && \
-	git clone https://github.com/zephyrproject-rtos/zephyr.git -b v${ZEPHYR_RTOS_VERSION} && \
+	git clone https://github.com/zephyrproject-rtos/zephyr.git && \
 	cd zephyr && \
+	git checkout ${ZEPHYR_RTOS_COMMIT} && \
 	pip3 install -r scripts/requirements.txt
 
 # Instantiate west workspace and install tools
 RUN cd /opt/toolchains && \
 	west init -l zephyr && \
-	west update
+	west update && \
+	west blobs fetch hal_espressif
 	
 # Install Zephyr SDK
 RUN cd /opt/toolchains && \
@@ -52,29 +59,12 @@ RUN cd /opt/toolchains && \
 	rm zephyr-sdk-${ZEPHYR_SDK_VERSION}_linux-${HOSTTYPE}.tar.xz
 
 #-------------------------------------------------------------------------------
-# Espressif Toolchain
-
-# # Set Espressif environment variables
-# ENV ESP_IDF_VERSION=$ESP_IDF_VERSION
-# ENV ESPRESSIF_TOOLCHAIN_PATH=/opt/toolchains/esp-idf
-# ENV ESP_IDF_PATH=$ESPRESSIF_TOOLCHAIN_PATH
-
-# # Install ESP-IDF
-# RUN cd /opt/toolchains && \
-# 	git clone --recursive https://github.com/espressif/esp-idf.git -b v${ESP_IDF_VERSION} && \
-# 	cd esp-idf && \
-# 	./install.sh all
-
-#-------------------------------------------------------------------------------
 # Entrypoint
 
-# # Create entrypoint.sh script that sources the export.sh and opens a bash shell
-# RUN echo -e '#!/bin/bash\nsource /opt/toolchains/esp-idf/export.sh\nexec /bin/bash' > /entrypoint.sh && \
-#     chmod +x /entrypoint.sh
+# Create entrypoint script that activates the Zephyr env and opens a bash shell
+RUN echo -e '#!/bin/bash\nsource /opt/toolchains/zephyr/zephyr-env.sh\nexec /bin/bash' > /entrypoint.sh && \
+    chmod +x /entrypoint.sh
 
-# # Set the entrypoint script
-# ENTRYPOINT ["/entrypoint.sh"]
-# CMD []
-
-# Entrypoint
-CMD ["/bin/bash"]
+# Set the entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
+CMD []
