@@ -56,8 +56,6 @@ RUN apt-get -y update && \
         xz-utils file \
         make \
         gcc \
-        gcc-multilib \
-        g++-multilib \
         libsdl2-dev \
         libmagic1 \
         vim \
