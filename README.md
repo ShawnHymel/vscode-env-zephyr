@@ -2,13 +2,15 @@
 
 This is a development environment for creating Docker images with the Zephyr toolchain used to build source code for various embedded targets. You build the image for your desired toolchain, store projects in the *workspace/* directory, and then run the image whenever you want to build (e.g. `west build`) the project. Separate Dockerfiles exist for different target families (ARM, Espressif, etc.). The intention is to use this environment as your VS Code working directory, but it is usable outside of VS Code.
 
+> **Note**: the instructions below were verified with Python 3.12 running on the host system. If one of the *pip install* steps fails, try installing exactly Python 3.12 and running the command again with `python3.12 -m pip install ...`
+
 ## Getting Started
 
 Before you start, install the following programs on your computer:
 
  * (Windows) [WSL 2](https://learn.microsoft.com/en-us/windows/wsl/install)
  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
- * [Python](https://www.python.org/downloads/) (tested with 3.12)
+ * [Python](https://www.python.org/downloads/)
 
 Open a terminal, navigate to this directory, and install the following dependencies:
 
