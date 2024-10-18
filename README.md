@@ -50,7 +50,7 @@ Windows:
 docker run --rm -it -v %cd%\workspace\:/workspace -w /workspace --add-host=host.docker.internal:host-gateway env-zephyr-espressif bash
 ```
 
-In the container, build the project. Note that I'm using the [ESP32-S3-DevKitC](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html) as my target board. Feel free to change it to one of the [other ESP32 dev boards](https://docs.zephyrproject.org/latest/boards/espressif/index.html).
+In the container, build the project. Note that I'm using the [ESP32-S3-DevKitC](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html) as my target board. Feel free to change it to one of the [other ESP32 dev boards](https://docs.zephyrproject.org/latest/boards/index.html#vendor=espressif).
 
 ```
 # cd blink
