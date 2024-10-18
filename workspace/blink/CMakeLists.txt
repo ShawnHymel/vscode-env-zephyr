@@ -1,4 +1,4 @@
-# 
+# Minimum CMake version
 cmake_minimum_required(VERSION 3.22.0)
 
 # Assign devicetree overlay (must be called before find_pacakge())
