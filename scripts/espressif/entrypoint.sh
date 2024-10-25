@@ -1,3 +1,3 @@
 #!/bin/bash
-source /opt/toolchains/zephyr/zephyr-env.sh
+source /workspace/zephyr/zephyr-env.sh
 exec /bin/bash

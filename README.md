@@ -1,6 +1,6 @@
 # VS Code Docker Environment for Zephyr
 
-This is a development environment for creating Docker images with the Zephyr toolchain used to build source code for various embedded targets. You build the image for your desired toolchain, store projects in the *workspace/* directory, and then run the image whenever you want to build (e.g. `west build`) the project. Separate Dockerfiles exist for different target families (ARM, Espressif, etc.). The intention is to use this environment as your VS Code working directory, but it is usable outside of VS Code.
+This is a development environment for creating Docker images with the Zephyr toolchain used to build source code for various embedded targets. You build the image for your desired toolchain, store projects in the *workspace/apps/* directory, and then run the image whenever you want to build (e.g. `west build`) the project. Separate Dockerfiles exist for different target families (ARM, Espressif, etc.). The intention is to use this environment as your VS Code working directory, but it is usable outside of VS Code.
 
 > **Note**: the instructions below were verified with Python 3.12 running on the host system. If one of the *pip install* steps fails, try installing exactly Python 3.12 and running the command again with `python3.12 -m pip install ...`
 
@@ -38,6 +38,20 @@ Build the image (this will take some time):
 docker build -t env-zephyr-espressif -f Dockerfile.espressif .
 ```
 
+Install the Zephyr RTOS source code in *workspace/zephyr/* and *workspace/modules/*. You only need to do this once!
+
+> **Note**: By placing the Zephyr source in your workspace, you can browse the files locally (and *Go to Definition* works in VS Code).
+
+Linux/macOS:
+```sh
+docker run --rm -it -v $(pwd)/workspace:/workspace --entrypoint /init.sh env-zephyr-espressif
+```
+
+Windows:
+```bat
+docker run --rm -it -v "%cd%"\workspace\:/workspace --entrypoint /init.sh env-zephyr-espressif
+```
+
 Run the image in interactive mode:
 
 Linux/macOS:
@@ -53,7 +67,7 @@ docker run --rm -it -v %cd%\workspace\:/workspace -w /workspace --add-host=host.
 In the container, build the project. Note that I'm using the [ESP32-S3-DevKitC](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html) as my target board. Feel free to change it to one of the [other ESP32 dev boards](https://docs.zephyrproject.org/latest/boards/index.html#vendor=espressif).
 
 ```
-# cd blink
+# cd apps/blink
 # west build -p always -b esp32s3_devkitc/esp32s3/procpu
 # exit
 ```

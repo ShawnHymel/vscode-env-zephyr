@@ -2,9 +2,8 @@
 
 # Settings
 ARG DEBIAN_VERSION=stable-20241016-slim
-# Zephyr 3.7.0 is not working with ESP32S3, see: https://github.com/zephyrproject-rtos/zephyr/issues/71397
-#ARG ZEPHYR_RTOS_VERSION=3.7.0
-ARG ZEPHYR_RTOS_COMMIT=7e9fb8b51fd9c40bf6673d6a82a612491a27548a
+# Zephyr RTOS version (commit hash) should match what's in workspace/manifests/west.yml
+ARG ZEPHYR_RTOS_VERSION=7e9fb8b51fd9c40bf6673d6a82a612491a27548a
 ARG ZEPHYR_SDK_VERSION=0.16.8
 ARG TOOLCHAIN_LIST="-t xtensa-espressif_esp32_zephyr-elf -t xtensa-espressif_esp32s2_zephyr-elf -t xtensa-espressif_esp32s3_zephyr-elf"
 ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll"
@@ -68,31 +67,21 @@ RUN mkdir -p /workspace/ && \
 #-------------------------------------------------------------------------------
 # Zephyr RTOS
 
-# Set Zephyr environment variables
-ENV ZEPHYR_RTOS_VERSION=${ZEPHYR_RTOS_VERSION}
-ENV ZEPHYR_SDK_VERSION=${ZEPHYR_SDK_VERSION}
-
-# Install Zephyr
+# Install Python requirements
 RUN cd /opt/toolchains && \
-	git clone https://github.com/zephyrproject-rtos/zephyr.git && \
-	cd zephyr && \
-	git checkout ${ZEPHYR_RTOS_COMMIT} && \
-	pip3 install -r scripts/requirements-base.txt
+    wget ${WGET_ARGS} https://raw.githubusercontent.com/zephyrproject-rtos/zephyr/${ZEPHYR_RTOS_VERSION}/scripts/requirements-base.txt && \
+    python3 -m pip install --no-cache-dir -r requirements-base.txt
 
-# Override the west manifest to only install necessary modules
-COPY scripts/espressif/west.yml /opt/toolchains/zephyr/west.yml
-
-# Instantiate west workspace and install tools
-RUN cd /opt/toolchains && \
-	west init -l zephyr && \
-	west update --narrow -o=--depth=1
-
-# Install module-specific blobs
-RUN cd /opt/toolchains && \
-    west blobs fetch hal_espressif
+# Copy init script that installs the Zephyr RTOS (source code) into the user's
+# workspace (shared between the host and the container). This should be run
+# once to set up the Zephyr RTOS source code in the workspace.
+COPY scripts/espressif/init.sh /init.sh
 
 #-------------------------------------------------------------------------------
 # Zephyr SDK
+
+# Set Zephyr SDK environment variables
+ENV ZEPHYR_SDK_VERSION=${ZEPHYR_SDK_VERSION}
 
 # Install minimal Zephyr SDK
 RUN cd /opt/toolchains && \

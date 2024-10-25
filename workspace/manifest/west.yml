@@ -1,0 +1,15 @@
+manifest:
+
+  remotes:
+    - name: zephyr
+      url-base: https://github.com/zephyrproject-rtos
+
+  projects:
+    - name: zephyr
+      remote: zephyr
+      path: zephyr
+      # Zephyr 3.7.0 is not working with ESP32S3, see: https://github.com/zephyrproject-rtos/zephyr/issues/71397
+      revision: 7e9fb8b51fd9c40bf6673d6a82a612491a27548a
+      import:
+        name-allowlist:
+          - hal_espressif
