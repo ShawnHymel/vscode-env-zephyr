@@ -4,6 +4,11 @@ This is a development environment for creating Docker images with the Zephyr too
 
 > **Note**: the instructions below were verified with Python 3.12 running on the host system. If one of the *pip install* steps fails, try installing exactly Python 3.12 and running the command again with `python3.12 -m pip install ...`
 
+You have a few options for using this development environment:
+
+ 1. (Default) The container runs *code-server* so that you can connect to `localhost:8080` via a browser to get a pre-made VS Code instance
+ 2. Override the image's *entrypoint* to get an interactive shell to run editing programs (e.g. `vim`, `mcedit`) and build (e.g. `west build`)
+
 ## Getting Started
 
 Before you start, install the following programs on your computer:
@@ -32,33 +37,45 @@ Choose your desired target family below and follow the steps to build image and 
 
 ### Espressif (ESP32)
 
-Build the image (this will take some time):
+From this directory, build the image (this will take some time):
 
 ```sh
 docker build -t env-zephyr-espressif -f Dockerfile.espressif .
 ```
 
-Run the image in interactive mode:
+Run the image in *VS Code Server* mode. Note that it mounts the local *workspace/* directory into the container!
 
 Linux/macOS:
 ```sh
-docker run --rm -it -v $(pwd)/workspace:/workspace -w /workspace --add-host=host.docker.internal:host-gateway env-zephyr-espressif
+docker run --rm -it -p 8080:8080 -v "%cd%"\workspace\:/workspace -w /workspace env-zephyr-espressif
 ```
 
 Windows:
 ```bat
-docker run --rm -it -v "%cd%"\workspace\:/workspace -w /workspace --add-host=host.docker.internal:host-gateway env-zephyr-espressif
+docker run --rm -it -p 8080:8080 -v "%cd%"\workspace\:/workspace -w /workspace env-zephyr-espressif
 ```
 
-In the container, build the project. Note that I'm using the [ESP32-S3-DevKitC](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html) as my target board. Feel free to change it to one of the [other ESP32 dev boards](https://docs.zephyrproject.org/latest/boards/index.html#vendor=espressif).
+Alternatively, you can run the image in interactive mode by adding the `--entrypoint /bin/bash` argument. This will allow you to skip running the VS Code server in the background.
+
+Open a browser and navigate to http://localhost:8080/.
+
+> **Important!** Take note of the two directories in your VS Code instance:
+> * ***/workspace*** is the shared directory between your host and container.
+> * ***/opt/toolchains/zephyr*** is the Zephyr RTOS source code. It is for reference only and should not be modified!
+
+Open a terminal in the VS Code client and build the project. Note that I'm using the [ESP32-S3-DevKitC](https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/hw-reference/esp32s3/user-guide-devkitc-1.html) as my target board. Feel free to change it to one of the [other ESP32 dev boards](https://docs.zephyrproject.org/latest/boards/index.html#vendor=espressif).
 
 ```
 # cd apps/blink
 # west build -p always -b esp32s3_devkitc/esp32s3/procpu
-# exit
 ```
 
-Connect the ESP32 board to your computer. In the terminal, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
+> **TODO** This is where the build process breaks with the following error:
+> ```
+> Kconfig:8: recursive 'source' of 'Kconfig.zephyr' detected. Check that environment variables are set correctly.
+> ```
+
+Connect the ESP32 board to your computer. In a new terminal on your host computer, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
 
 ```sh
 python -m pip install esptool==4.8.1 

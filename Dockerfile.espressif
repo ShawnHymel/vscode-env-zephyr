@@ -167,6 +167,9 @@ RUN cd /tmp && \
     rm cpptools.vsix && \
     rm cmake-tools.vsix
 
+# Copy workspace configuration
+COPY scripts/zephyr.code-workspace /zephyr.code-workspace
+
 #-------------------------------------------------------------------------------
 # Optional Settings
 
@@ -181,4 +184,4 @@ RUN echo "source ${VIRTUAL_ENV}/bin/activate" >> /root/.bashrc && \
     echo "source /opt/toolchains/zephyr/zephyr-env.sh" >> /root/.bashrc
 
 # Entrypoint: Start VS Code Server with the Zephyr workspace
-CMD code-server --auth none --bind-addr 0.0.0.0:${VS_CODE_SERVER_PORT} /workspace/zephyr.code-workspace
+CMD code-server --auth none --bind-addr 0.0.0.0:${VS_CODE_SERVER_PORT} /zephyr.code-workspace

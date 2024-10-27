@@ -11,10 +11,7 @@
     ],
     "settings": {
         "terminal.integrated.shell.linux": "/bin/bash",
-        "files.associations": {
-            "kernel.h": "c",
-            "kernel_includes.h": "c"
-        },
+        "workbench.colorTheme": "Visual Studio Dark - C++"
     },
     "extensions": {
         "recommendations": [
