@@ -2,10 +2,12 @@
 
 # Settings
 ARG DEBIAN_VERSION=stable-20241016-slim
-# Zephyr 3.7.0 is not working with ESP32S3, see: https://github.com/zephyrproject-rtos/zephyr/issues/71397
-#ARG ZEPHYR_RTOS_VERSION=3.7.0
-ARG ZEPHYR_RTOS_COMMIT=7e9fb8b51fd9c40bf6673d6a82a612491a27548a
 ARG ZEPHYR_SDK_VERSION=0.16.8
+ARG VS_CODE_SERVER_VERSION=4.93.1
+ARG VS_CODE_SERVER_PORT=8080
+ARG VS_CODE_EXT_CPPTOOLS_VERSION=1.22.10
+ARG VS_CODE_EXT_CMAKETOOLS_VERSION=1.19.52
+ARG VS_CODE_EXT_NRF_DEVICETREE_VERSION=2024.9.26
 ARG TOOLCHAIN_LIST="-t xtensa-espressif_esp32_zephyr-elf -t xtensa-espressif_esp32s2_zephyr-elf -t xtensa-espressif_esp32s3_zephyr-elf"
 ARG WGET_ARGS="-q --show-progress --progress=bar:force:noscroll"
 ARG VIRTUAL_ENV=/opt/venv
@@ -17,14 +19,27 @@ ARG VIRTUAL_ENV=/opt/venv
 FROM debian:${DEBIAN_VERSION}
 
 # Redeclare arguments after FROM
-ARG ZEPHYR_RTOS_VERSION
 ARG ZEPHYR_SDK_VERSION
+ARG VS_CODE_SERVER_VERSION
+ARG VS_CODE_SERVER_PORT
+ARG VS_CODE_EXT_CPPTOOLS_VERSION
+ARG VS_CODE_EXT_CMAKETOOLS_VERSION
+ARG VS_CODE_EXT_NRF_DEVICETREE_VERSION
 ARG TOOLCHAIN_LIST
 ARG WGET_ARGS
 ARG VIRTUAL_ENV
+ARG TARGETARCH
 
 # Set default shell during Docker image build to bash
 SHELL ["/bin/bash", "-c"]
+
+# Check if the target architecture is either x86_64 (amd64) or arm64 (aarch64)
+RUN if [ "$TARGETARCH" = "amd64" ] || [ "$TARGETARCH" = "arm64" ]; then \
+        echo "Architecture $TARGETARCH is supported."; \
+    else \
+        echo "Unsupported architecture: $TARGETARCH"; \
+        exit 1; \
+    fi
 
 # Set non-interactive frontend for apt-get to skip any user confirmations
 ENV DEBIAN_FRONTEND=noninteractive
@@ -35,10 +50,12 @@ RUN apt-get -y update && \
         ca-certificates \
         file \
         git \
+        build-essential \
         cmake \
         ninja-build gperf \
         device-tree-compiler \
         wget \
+        curl \
         python3 \
         python3-pip \
         python3-venv \
@@ -68,24 +85,17 @@ RUN mkdir -p /workspace/ && \
 #-------------------------------------------------------------------------------
 # Zephyr RTOS
 
-# Set Zephyr environment variables
-ENV ZEPHYR_RTOS_VERSION=${ZEPHYR_RTOS_VERSION}
-ENV ZEPHYR_SDK_VERSION=${ZEPHYR_SDK_VERSION}
+# Copy the west configuration file
+COPY scripts/espressif/west.yml /opt/toolchains/west.yml
 
-# Install Zephyr
-RUN cd /opt/toolchains && \
-	git clone https://github.com/zephyrproject-rtos/zephyr.git && \
-	cd zephyr && \
-	git checkout ${ZEPHYR_RTOS_COMMIT} && \
-	pip3 install -r scripts/requirements-base.txt
-
-# Override the west manifest to only install necessary modules
-COPY scripts/espressif/west.yml /opt/toolchains/zephyr/west.yml
-
-# Instantiate west workspace and install tools
-RUN cd /opt/toolchains && \
-	west init -l zephyr && \
+# Instantiate west workspace and install Zephyr RTOS (and submodules)
+RUN cd /opt && \
+	west init -l toolchains && \
 	west update --narrow -o=--depth=1
+
+# Install Zephyr dependencies
+RUN cd /opt/toolchains/zephyr && \
+    python3 -m pip install --no-cache-dir -r scripts/requirements.txt
 
 # Install module-specific blobs
 RUN cd /opt/toolchains && \
@@ -93,6 +103,9 @@ RUN cd /opt/toolchains && \
 
 #-------------------------------------------------------------------------------
 # Zephyr SDK
+
+# Set environment variables
+ENV ZEPHYR_SDK_VERSION=${ZEPHYR_SDK_VERSION}
 
 # Install minimal Zephyr SDK
 RUN cd /opt/toolchains && \
@@ -112,6 +125,49 @@ RUN cd /opt/toolchains/zephyr-sdk-${ZEPHYR_SDK_VERSION} && \
     bash zephyr-sdk-${HOSTTYPE}-hosttools-standalone-*.sh -y -d .
 
 #-------------------------------------------------------------------------------
+# VS Code Server
+
+# Set VS Code Server environment variables
+ENV VS_CODE_SERVER_VERSION=${VS_CODE_SERVER_VERSION}
+ENV VS_CODE_SERVER_PORT=${VS_CODE_SERVER_PORT}
+
+# Install VS Code Server
+RUN cd /tmp && \
+    wget ${WGET_ARGS} https://code-server.dev/install.sh && \
+    chmod +x install.sh && \
+    bash install.sh --version ${VS_CODE_SERVER_VERSION}
+
+# Install CMake extensions
+RUN code-server --install-extension ms-vscode.cmake-tools && \
+    code-server --install-extension twxs.cmake
+
+# Download CMake and C/C++ extensions (code-server extension manager does not work well)
+RUN cd /tmp && \
+    if [ "$TARGETARCH" = "amd64" ]; then \
+        wget ${WGET_ARGS} https://github.com/microsoft/vscode-cpptools/releases/download/v${VS_CODE_EXT_CPPTOOLS_VERSION}/cpptools-linux-x64.vsix -O cpptools.vsix; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        wget ${WGET_ARGS} https://github.com/microsoft/vscode-cpptools/releases/download/v${VS_CODE_EXT_CPPTOOLS_VERSION}/cpptools-linux-arm64.vsix -O cpptools.vsix; \
+    else \
+        echo "Unsupported architecture"; \
+        exit 1; \
+    fi && \
+    wget ${WGET_ARGS} https://github.com/microsoft/vscode-cmake-tools/releases/download/v${VS_CODE_EXT_CMAKETOOLS_VERSION}/cmake-tools.vsix -O cmake-tools.vsix
+
+# Install CMake and C/C++ extensions
+RUN cd /tmp && \
+    code-server --install-extension cpptools.vsix && \
+    code-server --install-extension cmake-tools.vsix
+
+# Install the nRF DeviceTree extension (not working yet)
+# RUN code-server --install-extension nordic-semiconductor.nrf-devicetree@${VS_CODE_EXT_NRF_DEVICETREE_VERSION}
+
+# Clean up
+RUN cd /tmp && \
+    rm install.sh && \
+    rm cpptools.vsix && \
+    rm cmake-tools.vsix
+
+#-------------------------------------------------------------------------------
 # Optional Settings
 
 # Use the "dark" theme for Midnight Commander
@@ -120,10 +176,9 @@ ENV MC_SKIN=dark
 #-------------------------------------------------------------------------------
 # Entrypoint
 
-# Entrypoint script that activates the Python venv and Zephyr env, then opens a bash shell
-COPY scripts/espressif/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Activate the Python and Zephyr environments for shell sessions
+RUN echo "source ${VIRTUAL_ENV}/bin/activate" >> /root/.bashrc && \
+    echo "source /opt/toolchains/zephyr/zephyr-env.sh" >> /root/.bashrc
 
-# Set the entrypoint script
-ENTRYPOINT ["/entrypoint.sh"]
-CMD []
+# Entrypoint: Start VS Code Server with the Zephyr workspace
+CMD code-server --auth none --bind-addr 0.0.0.0:${VS_CODE_SERVER_PORT} /workspace/zephyr.code-workspace

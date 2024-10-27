@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Zephyr Dev Container",
+            "includePath": [
+                "${workspaceFolder:/workspace}/**",  // Refers to /workspace
+                "${workspaceFolder:/opt/toolchains/zephyr}/**"    // Refers to /opt/toolchains/zephyr
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder:/workspace}/**",
+                    "${workspaceFolder:/opt/toolchains/zephyr}/**"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
