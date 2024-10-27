@@ -2,6 +2,8 @@
 
 This is a development environment for creating Docker images with the Zephyr toolchain used to build source code for various embedded targets. You build the image for your desired toolchain, store projects in the *workspace/* directory, and then run the image whenever you want to build (e.g. `west build`) the project. Separate Dockerfiles exist for different target families (ARM, Espressif, etc.). The intention is to use this environment as your VS Code working directory, but it is usable outside of VS Code.
 
+![Screen Blink Build](.images/screen-blink-build.png)
+
 > **Note**: the instructions below were verified with Python 3.12 running on the host system. If one of the *pip install* steps fails, try installing exactly Python 3.12 and running the command again with `python3.12 -m pip install ...`
 
 You have a few options for using this development environment:
@@ -70,12 +72,9 @@ Open a terminal in the VS Code client and build the project. Note that I'm using
 # west build -p always -b esp32s3_devkitc/esp32s3/procpu
 ```
 
-> **TODO** This is where the build process breaks with the following error:
-> ```
-> Kconfig:8: recursive 'source' of 'Kconfig.zephyr' detected. Check that environment variables are set correctly.
-> ```
+With some luck, the *blink* sample should build. The binary files will be in *workspace/apps/blink/build/zephyr*, which you can flash using [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/).
 
-Connect the ESP32 board to your computer. In a new terminal on your host computer, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
+Connect the ESP32 board to your computer. In a new terminal on your **host computer**, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
 
 ```sh
 python -m pip install esptool==4.8.1 
@@ -84,7 +83,7 @@ python -m pip install esptool==4.8.1
 Flash the binary to your board. For some ESP32 boards, you need to put it into bootloader by holding the *BOOTSEL* button and pressing the *RESET* button (or cycling power). Change `<PORT>` to the serial port for your ESP32 board (e.g. `/dev/ttyS0` for Linux, `/dev/tty.usbserial-1420` for macOS, `COM7` for Windows). You might also need to install a serial port driver, depending on the particular board.
 
 ```sh
-python -m esptool --port "<PORT>" --chip auto --baud 921600 --before default_reset --after hard_reset write_flash -u --flash_mode keep --flash_freq 40m --flash_size detect 0x0 workspace/blink/build/zephyr/zephyr.bin
+python -m esptool --port "<PORT>" --chip auto --baud 921600 --before default_reset --after hard_reset write_flash -u --flash_mode keep --flash_freq 40m --flash_size detect 0x0 workspace/apps/blink/build/zephyr/zephyr.bin
 ```
 
 Open a serial port for debugging. Change `<PORT>` to the serial port for your ESP32 board.

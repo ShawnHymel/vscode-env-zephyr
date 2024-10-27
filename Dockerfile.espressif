@@ -2,6 +2,9 @@
 
 # Settings
 ARG DEBIAN_VERSION=stable-20241016-slim
+# Zephyr 3.7.0 is not working with ESP32S3, see: https://github.com/zephyrproject-rtos/zephyr/issues/71397
+#ARG ZEPHYR_RTOS_VERSION=3.7.0
+ARG ZEPHYR_RTOS_COMMIT=26603cefaf41298c417f2eee834ed40d9ab35d3a
 ARG ZEPHYR_SDK_VERSION=0.16.8
 ARG VS_CODE_SERVER_VERSION=4.93.1
 ARG VS_CODE_SERVER_PORT=8080
@@ -19,6 +22,8 @@ ARG VIRTUAL_ENV=/opt/venv
 FROM debian:${DEBIAN_VERSION}
 
 # Redeclare arguments after FROM
+ARG ZEPHYR_RTOS_VERSION
+ARG ZEPHYR_RTOS_COMMIT
 ARG ZEPHYR_SDK_VERSION
 ARG VS_CODE_SERVER_VERSION
 ARG VS_CODE_SERVER_PORT
@@ -85,17 +90,23 @@ RUN mkdir -p /workspace/ && \
 #-------------------------------------------------------------------------------
 # Zephyr RTOS
 
-# Copy the west configuration file
-COPY scripts/espressif/west.yml /opt/toolchains/west.yml
+# Set Zephyr environment variables
+ENV ZEPHYR_RTOS_VERSION=${ZEPHYR_RTOS_VERSION}
 
-# Instantiate west workspace and install Zephyr RTOS (and submodules)
-RUN cd /opt && \
-	west init -l toolchains && \
+# Install Zephyr
+RUN cd /opt/toolchains && \
+    git clone https://github.com/zephyrproject-rtos/zephyr.git && \
+    cd zephyr && \
+    git checkout ${ZEPHYR_RTOS_COMMIT} && \
+    python3 -m pip install -r scripts/requirements-base.txt
+
+# Override the west manifest to only install necessary modules
+COPY scripts/espressif/west.yml /opt/toolchains/zephyr/west.yml
+
+# Instantiate west workspace and install tools
+RUN cd /opt/toolchains && \
+	west init -l zephyr && \
 	west update --narrow -o=--depth=1
-
-# Install Zephyr dependencies
-RUN cd /opt/toolchains/zephyr && \
-    python3 -m pip install --no-cache-dir -r scripts/requirements.txt
 
 # Install module-specific blobs
 RUN cd /opt/toolchains && \
