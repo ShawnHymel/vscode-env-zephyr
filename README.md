@@ -49,12 +49,12 @@ Run the image in *VS Code Server* mode. Note that it mounts the local *workspace
 
 Linux/macOS:
 ```sh
-docker run --rm -it -p 8080:8080 -v "%cd%"\workspace\:/workspace -w /workspace env-zephyr-espressif
+docker run --rm -it -p 8080:8080 -v "$(pwd)"/workspace:/workspace -w /workspace env-zephyr-espressif
 ```
 
 Windows:
 ```bat
-docker run --rm -it -p 8080:8080 -v "%cd%"\workspace\:/workspace -w /workspace env-zephyr-espressif
+docker run --rm -it -p 8080:8080 -v "%cd%\workspace":/workspace -w /workspace env-zephyr-espressif
 ```
 
 Alternatively, you can run the image in interactive mode by adding the `--entrypoint /bin/bash` argument. This will allow you to skip running the VS Code server in the background.
@@ -77,7 +77,7 @@ With some luck, the *blink* sample should build. The binary files will be in *wo
 Connect the ESP32 board to your computer. In a new terminal on your **host computer**, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
 
 ```sh
-python -m pip install esptool==4.8.1 
+python -m pip install esptool==4.8.1
 ```
 
 Flash the binary to your board. For some ESP32 boards, you need to put it into bootloader by holding the *BOOTSEL* button and pressing the *RESET* button (or cycling power). Change `<PORT>` to the serial port for your ESP32 board (e.g. `/dev/ttyS0` for Linux, `/dev/tty.usbserial-1420` for macOS, `COM7` for Windows). You might also need to install a serial port driver, depending on the particular board.
