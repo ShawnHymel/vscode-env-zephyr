@@ -8,7 +8,7 @@ This is a development environment for creating Docker images with the Zephyr too
 
 You have a few options for using this development environment:
 
- 1. (Default) The container runs *code-server* so that you can connect to `localhost:8080` via a browser to get a pre-made VS Code instance
+ 1. (Default) The container runs *code-server* so that you can connect to `localhost:8800` via a browser to get a pre-made VS Code instance
  2. Override the image's *entrypoint* to get an interactive shell to run editing programs (e.g. `vim`, `mcedit`) and build (e.g. `west build`)
 
 ## Getting Started
@@ -59,7 +59,7 @@ docker run --rm -it -p 8080:8080 -v "%cd%\workspace":/workspace -w /workspace en
 
 Alternatively, you can run the image in interactive mode by adding the `--entrypoint /bin/bash` argument. This will allow you to skip running the VS Code server in the background.
 
-Open a browser and navigate to http://localhost:8080/.
+Open a browser and navigate to http://localhost:8800/.
 
 > **Important!** Take note of the two directories in your VS Code instance:
 > * ***/workspace*** is the shared directory between your host and container.

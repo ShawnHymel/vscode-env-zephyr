@@ -1,9 +1,6 @@
 # Minimum CMake version
 cmake_minimum_required(VERSION 3.22.0)
 
-# Assign devicetree overlay (must be called before find_pacakge())
-set(DTC_OVERLAY_FILE "blink.overlay")
-
 # Locate the Zephyr RTOS source
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
