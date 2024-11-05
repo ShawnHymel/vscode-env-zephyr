@@ -19,6 +19,8 @@ Before you start, install the following programs on your computer:
  * [Docker Desktop](https://www.docker.com/products/docker-desktop/)
  * [Python](https://www.python.org/downloads/)
 
+Windows users will likely need to install the [virtual COM port (VCP) drivers from SiLabs](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads).
+
 Open a terminal, navigate to this directory, and install the following dependencies:
 
 Linux/macOS:
@@ -74,7 +76,7 @@ Open a terminal in the VS Code client and build the project. Note that I'm using
 
 With some luck, the *blink* sample should build. The binary files will be in *workspace/apps/blink/build/zephyr*, which you can flash using [esptool](https://docs.espressif.com/projects/esptool/en/latest/esp32/).
 
-Connect the ESP32 board to your computer. In a new terminal on your **host computer**, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
+Connect a USB cable from your computer to the **UART port** on the development board. If you do not see the serial/COM port on your host OS, you might need to [install the necessary SiLabs VCP driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads). In a new terminal on your **host computer**, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
 
 ```sh
 python -m pip install esptool==4.8.1
