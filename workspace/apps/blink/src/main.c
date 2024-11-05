@@ -2,6 +2,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 
+#include "say_hello.h"
+
 /* 1000 msec = 1 sec */
 #define SLEEP_TIME_MS   1000
 
@@ -35,8 +37,9 @@ int main(void)
 		}
 
 		led_state = !led_state;
-		printk("LED state: %s\n", led_state ? "ON" : "OFF");
+		say_hello();
 		k_msleep(SLEEP_TIME_MS);
 	}
+	
 	return 0;
 }
