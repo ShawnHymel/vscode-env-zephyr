@@ -83,6 +83,8 @@ With some luck, the *blink* sample should build. The binary files will be in *wo
 
 Connect a USB cable from your computer to the **UART port** on the development board. If you do not see the serial/COM port on your host OS, you might need to [install the necessary SiLabs VCP driver](https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers?tab=downloads). In a new terminal on your **host computer**, activate the Python virtual environment (Linux/macOS: `source venv/bin/activate`, Windows: `venv\Scripts\activate`) if not done so already. Install the ESP flashing tool:
 
+> **Important**: the following steps should be done on the **host computer** (not in the Docker container).
+
 ```sh
 python -m pip install esptool==4.8.1
 ```
