@@ -24,14 +24,17 @@ Windows users will likely need to install the [virtual COM port (VCP) drivers fr
 Open a terminal, navigate to this directory, and install the following dependencies:
 
 Linux/macOS:
+
 ```sh
 python -m venv venv
 source venv/bin/activate
 python -m pip install pyserial==3.5
 ```
 
-Windows:
+Windows (PowerShell):
+
 ```bat
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted -Force
 python -m venv venv
 venv\Scripts\activate
 python -m pip install pyserial==3.5

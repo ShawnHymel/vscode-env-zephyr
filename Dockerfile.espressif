@@ -152,7 +152,7 @@ RUN cd /tmp && \
 # Install CMake extensions
 RUN code-server --install-extension ms-vscode.cmake-tools
 
-# Download CMake and C/C++ extensions (code-server extension manager does not work well)
+# Download CMake, C/C++, Devicetree extensions (code-server extension manager does not work well)
 RUN cd /tmp && \
     if [ "$TARGETARCH" = "amd64" ]; then \
         wget ${WGET_ARGS} https://github.com/microsoft/vscode-cpptools/releases/download/v${VS_CODE_EXT_CPPTOOLS_VERSION}/cpptools-linux-x64.vsix -O cpptools.vsix; \
@@ -162,21 +162,21 @@ RUN cd /tmp && \
         echo "Unsupported architecture"; \
         exit 1; \
     fi && \
-    wget ${WGET_ARGS} https://github.com/microsoft/vscode-cmake-tools/releases/download/v${VS_CODE_EXT_CMAKETOOLS_VERSION}/cmake-tools.vsix -O cmake-tools.vsix
+    wget ${WGET_ARGS} https://github.com/microsoft/vscode-cmake-tools/releases/download/v${VS_CODE_EXT_CMAKETOOLS_VERSION}/cmake-tools.vsix -O cmake-tools.vsix && \
+    wget --compression=gzip https://marketplace.visualstudio.com/_apis/public/gallery/publishers/nordic-semiconductor/vsextensions/nrf-devicetree/${VS_CODE_EXT_NRF_DEVICETREE_VERSION}/vspackage -O nordic-semiconductor.nrf-devicetree.vsix
 
-# Install CMake and C/C++ extensions
+# Install extensions
 RUN cd /tmp && \
     code-server --install-extension cpptools.vsix && \
-    code-server --install-extension cmake-tools.vsix
-
-# Install the nRF DeviceTree extension (not working yet)
-# RUN code-server --install-extension nordic-semiconductor.nrf-devicetree@${VS_CODE_EXT_NRF_DEVICETREE_VERSION}
+    code-server --install-extension cmake-tools.vsix && \
+    code-server --install-extension nordic-semiconductor.nrf-devicetree.vsix
 
 # Clean up
 RUN cd /tmp && \
     rm install.sh && \
     rm cpptools.vsix && \
-    rm cmake-tools.vsix
+    rm cmake-tools.vsix && \
+    rm nordic-semiconductor.nrf-devicetree.vsix
 
 # Copy workspace configuration
 COPY scripts/zephyr.code-workspace /zephyr.code-workspace
